@@ -1,0 +1,118 @@
+---
+title: "Dashboard 0HV130"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+runtime: shiny
+---
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(psych) 
+library(knitr)  
+library(kableExtra)  
+library(ggplot2)
+library(shiny)
+df <-read.csv("df_Sleep_Fatigue_AlcoholUse.csv")
+```
+
+Tables {data-icon="fa-table"}
+===================================== 
+
+### Table 1
+    
+```{r}
+valueBox(
+  value = nrow(df),
+  caption = "Total number of participants",
+  icon = "fa-users"
+)
+```
+    
+### Table 2
+
+```{r}
+valueBox(
+  value = ncol(df),
+  caption = "Total number of variables",
+  icon = "fa-table"
+)
+```
+### Table 3
+```{r}
+valueBox(
+  value = sum(is.na(df)),
+  caption = "Total number of missings",
+  icon = "fa-trash"
+)
+```
+## Two tabs {.tabset}
+### Descriptive Statistics
+```{r}
+variables <- df[c("TSC", "CIS_Concentration", "PSQI_GlobalScore", "MCTQ_MSFsc", "AUDIT_Score")]
+
+labels <- variables |>
+  rename(
+    `Trait self-control` = TSC,
+    `Concentration (CIS)` = CIS_Concentration,
+    `Disturbances in sleep quality (PSQI)` = PSQI_GlobalScore,
+    `Chronotype (MCTQ)` = MCTQ_MSFsc,
+    `Alcohol usage (AUDIT)` = AUDIT_Score
+  )
+
+data <- describe(labels)
+
+frame <- data[c("n", "mean", "sd", "min", "max")]
+
+frame_1 <- frame |>
+  kable("html", caption = "Table 1. Descriptive statistics") |> 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+frame_1
+```
+### Dataframe
+```{r}
+var_EDA <- c("TSC", "CIS_Concentration", "PSQI_GlobalScore", "MCTQ_MSFsc", "AUDIT_Score") 
+
+frame_2 <- df[, var_EDA] |>
+  mutate(" " = seq_along(df[[var_EDA[1]]])) |>
+  select(" ", everything()) |> 
+  kable("html", caption = "Table 2. Dataframe") |> 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+frame_2
+```
+Visualizations {data-icon="fa-signal"}
+=====================================     
+Column {.sidebar data-width=300}
+-----------------------------------------------------------------------
+### Input Controls
+```{r}
+var_EDA <- c("TSC", "CIS_Concentration", "PSQI_GlobalScore", "MCTQ_MSFsc", "AUDIT_Score")
+
+sliderInput("n_bins", "Select Number of Bins:", min = 5, max = 50, value = 30)
+
+selectInput("variable", "Choose Variable:", choices = var_EDA, selected = "TSC")
+```
+Column
+-----------------------------------------------------------------------
+## Two tabs {.tabset}
+### Histogram
+```{r}
+renderPlot({
+  selected_var <- input$variable
+  num_bins <- input$n_bins
+
+  if (selected_var %in% names(df)) {
+    hist(df[[selected_var]],
+         breaks = num_bins,
+         main = paste("Histogram of", selected_var),
+         xlab = selected_var,
+         col = "lightblue",
+         border = "white")
+  }
+})
+```
+### Heatmap
+```{r}
+print("hallo")
+```
